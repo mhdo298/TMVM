@@ -2,12 +2,12 @@ config:
 spaces = 6
 program_registers = 2
 alu_registers = 3
-hardware_registers = 32
+hardware_registers = 0
 total_registers = program_registers + alu_registers + hardware_registers
 address_size = 32
 pipeline_stages = {
-    '00': 'fetch_decode',
-    '01': 'memory',
+    '00': 'fetch',
+    '01': 'read',
     '10': 'execute',
     '11': 'writeback'
 }
@@ -20,8 +20,8 @@ step setup_spaces:
             |move_right_one_{spaces - 1}_{w}, B -> {w}, R, end
         else:
             |move_right_one_{i}_{w}, B -> {w}, L, return_to_blank_{i}
-            |return_to_blank_{i}, {r} -> {r}, L, return_to_blank_{i}
-            |return_to_blank_{i}, B -> B, R, start_{i}
+            |return_to_blank_{i}, {r} -> , L,
+            |return_to_blank_{i}, B -> , R, start_{i}
             |start_{i}, {r} -> B, R, move_right_one_{i+1}_{r}
 done
 
@@ -42,19 +42,20 @@ done
 step init_to_start:
     |start, B -> B, L, init_0
     for i in range(spaces - 1):
-        |init_{i}, {r} -> {r}, L, init_0
-        |init_{i}, B -> B, L, init_{i+1}
+        |init_{i}, {r} -> , L, init_0
+        |init_{i}, B -> , L, init_{i+1}
     |init_{spaces - 1}, B -> 0, R, extra
     |extra, B -> 0, R, end
 done
 
 step pipeline:
-    |start, B -> B, L, skip
-    |skip, {r} -> {r}, L, read
-    |read, {r} -> {r}, R, read{r}
-    |read{w}, {r} -> {r}, R, read{w}{r}
+    |start, B -> , L, skip
+    |skip, {r} -> , L, read
+    |read, {r} -> , R, read{r}
+    |read{w}, {r} -> , R, read{w}{r}
     for k in pipeline_stages:
-        |{'read' + k}, B -> B, R, {pipeline_stages[k]}
+        |{'read' + k}, B -> , R, {pipeline_stages[k]}||start
+
 done
 hook:
  -> setup_spaces

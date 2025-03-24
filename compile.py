@@ -9,11 +9,15 @@ def compile_step(name, alias: dict, code: str):
     compiled_code = f"def {name}(tm):\n"
     for line in code.splitlines():
         if line.strip().startswith('|'):
-            spaces, expression = line.split('|')
+            spaces, expression = line.split('|', 1)
             current, transition = expression.split('->')
             current_state, read = [token.strip() for token in current.split(',')]
             current_state = f'{name}||{current_state}' if '||' not in current_state else current_state
             write, direction, next_state = [token.strip() for token in transition.split(',')]
+            if next_state == '':
+                next_state = current_state
+            if write == '':
+                write = read
             next_state = f'{name}||{next_state}' if '||' not in next_state else next_state
             if current_state in alias:
                 current_state = alias[current_state]
@@ -26,6 +30,10 @@ def compile_step(name, alias: dict, code: str):
             if read == '{r}':
                 compiled = f"""{spaces}for r in {non_blanks}:\n""" + '\n'.join(
                     [indent + line for line in compiled.splitlines()])
+            # if read[1:-1].isdigit():
+            #     compiled = f"""{spaces}for m in [''.join(x) for x in itertools.product({non_blanks}, repeat={int(read[1:-1])})]:\n""" + '\n'.join(
+            #         [indent + line for line in compiled.splitlines()])
+
             compiled_code += compiled + '\n'
         else:
             compiled_code += line + '\n'
@@ -76,8 +84,9 @@ def compile_from_file(filename: str, tm=None):
                 section[current] += line
     return compile_tm(section[0], section[1], section[2], tm)
 
-
-tm = compile_from_file('lower_level/hardware.tm')
-print(tm.transitions)
-runner = Runner(tm, '0' * 32)
-runner.run()
+if __name__ == '__main__':
+    tm = compile_from_file('lower_level/hardware.tm')
+    tm = compile_from_file('lower_level/fetch.tm', tm)
+    print(tm.transitions)
+    runner = Runner(tm, '1' * 32 + '0' * 32)
+    runner.run()

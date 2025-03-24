@@ -1,0 +1,1 @@
+instructions | current instruction, program counter | rs1, rs2, rd | x0 - x31 | stack

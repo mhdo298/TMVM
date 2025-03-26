@@ -1,9 +1,101 @@
-mov r1, mov r2, ALU, mov r3
+pipeline_stages = {
+    '00': 'fetch',
+    '01': 'read',
+    '10': 'execute',
+    '11': 'write'
+}
+
+read/write:
+move source pointer
+move target pointer
+repeat x times:
+    read from source pointer
+    write to source pointer
+move source pointer to end then back
+move target pointer to end then back
+(sign extend if needed)
+
+
+execute:
 add
 sub
 and
 or
 xor
+slt
+sltu
 
-slt ->
-sltu ->
+fetch:
+    mov is to pc
+
+decode:
+    read opcode -> read funct3 (-> read funct7)
+        0110011:
+            000:
+                0000000: exec_add
+                0100000: exec_sub
+            001:
+                0000000: exec_sll
+            010:
+                0000000: exec_slt
+            011:
+                0000000: exec_sltu
+            100:
+                0000000: exec_xor
+            101:
+                0000000: exec_srl
+                0100000: exec_sra
+            110:
+                0000000: exec_or
+            111:
+                0000000: exec_and
+        0010011:
+            000: exec_addi
+            001:
+                0000000: exec_slli
+            010: exec_slti
+            011: exec_sltiu
+            100: exec_xori
+            101:
+                0000000: exec_srli
+                0100000: exec_srai
+            110: exec_ori
+            111: exec_andi
+        0000011:
+            000: exec_lb
+            001: exec_lh
+            010: exec_lw
+            100: exec_lbu
+            101: exec_lhu
+        0100011:
+            000: exec_sb
+            001: exec_sh
+            010: exec_sw
+        1100011:
+            000: exec_beq
+            001: exec_bnq
+            100: exec_blt
+            101: exec_bge
+            110: exec_bltu
+            111: exec_bgeu
+        1101111: exec_jal
+        1100111:
+            000: exec_jalr
+        0110111: exec_lui
+        0010111: exec_auipc
+
+exec_add:
+    decode -> read_rs1_and_rs2
+
+mov_{b}_bytes_from_r{x}_at_{y}_to_r{z}_at_{t}:
+    mov_ins_{31-x}
+    mov_rs1_{31-y}
+    mov_rs{x}_to_rs{z}_{b}
+    mov_ins_{x-z-31}
+    mov_rs1_{y-z-31}
+
+deref:
+    mov_
+arithmetic:
+
+
